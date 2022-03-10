@@ -1,0 +1,28 @@
+.home-img {
+  width: 100%;
+  height: auto;
+  background-image: url("/images/default.jpg");
+  background-position: center -150px;
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  padding: 100px 0px 100px 0px;
+  font-family: cursive;
+  font-size: 8vw;
+}
+
+.active {
+  background-color: #e4ac06;
+}
+
+.banner-img {
+  background: url("/images/top-banner.jpg");
+}
+
+.pointer {
+  cursor: pointer;
+}
+
+.center {
+  margin: auto;
+}
