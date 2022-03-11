@@ -2,7 +2,7 @@ import { compare, hashedPassword } from "../helpers";
 import User from "../models/user";
 import jwt from "jsonwebtoken";
 
-export const SignUp = async (req, res) => {
+export const signUp = async (req, res) => {
   const { name, email, password } = req.body;
   // Validation
   if (!name) {
@@ -43,11 +43,13 @@ export const SignUp = async (req, res) => {
   }
 };
 
-export const Login = async (req, res) => {
+export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
     //Checking user exists or not
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email })
+      .populate("requests", "_id name")
+      .populate("friends", "_id name");
     if (!user) {
       return res.json({
         error: "No user found",
@@ -80,5 +82,116 @@ export const Login = async (req, res) => {
     return res.json({
       error: "Error! Try again",
     });
+  }
+};
+
+export const findPeople = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    const friends = user.friends;
+    const requests = user.requests;
+    friends.push(...requests, user._id);
+
+    const people = await User.find({ _id: { $nin: friends } }).select(
+      "-password"
+    );
+    // .limit(10);
+    res.json(people);
+  } catch (err) {
+    console.log(err);
+  }
+};
+
+export const addRequest = async (req, res) => {
+  try {
+    const user = await User.findByIdAndUpdate(req.body._id, {
+      $addToSet: { requests: req.user._id },
+    });
+    res.sendStatus(200);
+  } catch (err) {
+    console.log(err);
+  }
+};
+
+// Add friend to requested user
+// As middleware
+export const acceptRequest = async (req, res, next) => {
+  try {
+    const user = await User.findByIdAndUpdate(req.body._id, {
+      $addToSet: { friends: req.user._id },
+    });
+    next();
+  } catch (err) {
+    console.log(err);
+  }
+};
+
+// Add friend to current user
+export const addFriend = async (req, res) => {
+  try {
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      {
+        $addToSet: { friends: req.body._id },
+        $pull: { requests: req.body._id },
+      },
+      { new: true }
+    ).select("-password -secret");
+    res.json(user);
+  } catch (err) {
+    console.log(err);
+  }
+};
+
+export const getUser = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id)
+      .populate("requests", "_id name")
+      .populate("friends", "_id name")
+      .select("-password");
+
+    res.json(user);
+  } catch (err) {
+    console.log(err);
+  }
+};
+
+export const rejectRequest = async (req, res) => {
+  try {
+    const user = await User.findByIdAndUpdate(req.user._id, {
+      $pull: { requests: req.body._id },
+    });
+    res.sendStatus(200);
+  } catch (err) {
+    console.log(err);
+  }
+};
+
+// remove friend to requested user
+// As middleware
+export const unfriend = async (req, res, next) => {
+  try {
+    const user = await User.findByIdAndUpdate(req.body._id, {
+      $pull: { friends: req.user._id },
+    });
+    next();
+  } catch (err) {
+    console.log(err);
+  }
+};
+
+// remove friend to current user
+export const removeFriend = async (req, res) => {
+  try {
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      {
+        $pull: { friends: req.body._id },
+      },
+      { new: true }
+    );
+    res.sendStatus(200);
+  } catch (err) {
+    console.log(err);
   }
 };

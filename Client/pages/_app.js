@@ -7,7 +7,6 @@ import axios from "axios";
 import { UserProvider } from "../context";
 
 function MyApp({ Component, pageProps }) {
-  axios.defaults.baseURL = process.env.NEXT_PUBLIC_API;
   return (
     <UserProvider>
       <Nav />
